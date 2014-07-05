@@ -56,7 +56,7 @@
 					<key>value</key>
 					<array>
 						<real>234.05093383789062</real>
-						<real>105.60185241699219</real>
+						<real>97.268524169921875</real>
 						<integer>0</integer>
 						<integer>0</integer>
 						<integer>0</integer>
@@ -84,7 +84,7 @@
 					<key>type</key>
 					<string>Check</string>
 					<key>value</key>
-					<true/>
+					<false/>
 				</dict>
 				<dict>
 					<key>name</key>
@@ -139,8 +139,6 @@
 					</array>
 				</dict>
 			</array>
-			<key>selected</key>
-			<true/>
 		</dict>
 		<dict>
 			<key>UUID</key>
@@ -764,7 +762,7 @@
 										<key>value</key>
 										<array>
 											<real>244.44143676757812</real>
-											<real>207.70606994628906</real>
+											<real>199.37274169921875</real>
 											<integer>0</integer>
 											<integer>0</integer>
 											<integer>0</integer>
@@ -819,6 +817,8 @@
 										</array>
 									</dict>
 								</array>
+								<key>selected</key>
+								<true/>
 							</dict>
 							<dict>
 								<key>UUID</key>
