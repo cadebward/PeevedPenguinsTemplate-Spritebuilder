@@ -10,7 +10,6 @@
 #import "CCPhysics+ObjectiveChipmunk.h"
 #import "Penguin.h"
 
-// not sure if this is where you put this...
 static const float MIN_SPEED = 5.f;
 
 @implementation Gameplay {
@@ -28,7 +27,7 @@ static const float MIN_SPEED = 5.f;
 
 - (void)update:(CCTime)delta
 {
-    if(_currentPenguin.launched) {
+   // if(_currentPenguin.launched) {
         // if speed is below minimum speed, assume this attempt is over
         if (ccpLength(_currentPenguin.physicsBody.velocity) < MIN_SPEED){
             [self nextAttempt];
@@ -48,7 +47,7 @@ static const float MIN_SPEED = 5.f;
             [self nextAttempt];
             return;
         }
-    }
+    //}
 }
 
 // is called when CCB file has completed loading
