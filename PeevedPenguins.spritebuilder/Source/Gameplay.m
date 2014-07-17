@@ -27,7 +27,7 @@ static const float MIN_SPEED = 5.f;
 
 - (void)update:(CCTime)delta
 {
-   // if(_currentPenguin.launched) {
+    if(_currentPenguin.launched) {
         // if speed is below minimum speed, assume this attempt is over
         if (ccpLength(_currentPenguin.physicsBody.velocity) < MIN_SPEED){
             [self nextAttempt];
@@ -47,7 +47,7 @@ static const float MIN_SPEED = 5.f;
             [self nextAttempt];
             return;
         }
-    //}
+    }
 }
 
 // is called when CCB file has completed loading
@@ -119,10 +119,9 @@ static const float MIN_SPEED = 5.f;
         // releases the joint and lets the catapult snap back
         [_mouseJoint invalidate];
         _mouseJoint = nil;
-        
-        // set penguin as launched
-        _currentPenguin.launched = TRUE;
     }
+    // set penguin as launched
+    _currentPenguin.launched = TRUE;
 }
 
 - (void)nextAttempt {
