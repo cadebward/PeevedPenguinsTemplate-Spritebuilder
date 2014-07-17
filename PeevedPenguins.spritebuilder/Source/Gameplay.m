@@ -10,6 +10,9 @@
 #import "CCPhysics+ObjectiveChipmunk.h"
 #import "Penguin.h"
 
+// not sure if this is where you put this...
+static const float MIN_SPEED = 5.f;
+
 @implementation Gameplay {
     CCPhysicsNode *_physicsNode;
     CCNode *_catapultArm;
@@ -22,9 +25,6 @@
     CCPhysicsJoint *_penguinCatapultJoint;
     CCAction *_followPenguin;
 }
-
-// not sure if this is where you put this...
-static const float MIN_SPEED = 5.f;
 
 - (void)update:(CCTime)delta
 {
