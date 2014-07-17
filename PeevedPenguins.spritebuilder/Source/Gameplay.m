@@ -30,7 +30,7 @@ static const float MIN_SPEED = 5.f;
 {
     if(_currentPenguin.launched) {
         // if speed is below minimum speed, assume this attempt is over
-        if (ccpLength(_currentPenguin.physicsBody.velocity) < MIN_SPEED) {
+        if (ccpLength(_currentPenguin.physicsBody.velocity) < MIN_SPEED){
             [self nextAttempt];
             return;
         }
