@@ -2,13 +2,13 @@
 //  Gameplay.m
 //  PeevedPenguins
 //
-//  Created by Bryan Johnson on 7/1/14.
+//  Created by Cade on 7/3/14.
 //  Copyright (c) 2014 Apportable. All rights reserved.
 //
 
 #import "Gameplay.h"
-#import "Penguin.h"
 #import "CCPhysics+ObjectiveChipmunk.h"
+#import "Penguin.h"
 
 static const float MIN_SPEED = 5.f;
 
@@ -25,19 +25,43 @@ static const float MIN_SPEED = 5.f;
     CCAction *_followPenguin;
 }
 
+- (void)update:(CCTime)delta
+{
+    if(_currentPenguin.launched) {
+        // if speed is below minimum speed, assume this attempt is over
+        if (ccpLength(_currentPenguin.physicsBody.velocity) < MIN_SPEED){
+            [self nextAttempt];
+            return;
+        }
+        
+        int xMin = _currentPenguin.boundingBox.origin.x;
+        
+        if (xMin < self.boundingBox.origin.x) {
+            [self nextAttempt];
+            return;
+        }
+        
+        int xMax = xMin + _currentPenguin.boundingBox.size.width;
+        
+        if (xMax > (self.boundingBox.origin.x + self.boundingBox.size.width)) {
+            [self nextAttempt];
+            return;
+        }
+    }
+}
+
 // is called when CCB file has completed loading
 - (void)didLoadFromCCB {
     // tell this scene to accept touches
     self.userInteractionEnabled = TRUE;
-    
     CCScene *level = [CCBReader loadAsScene:@"Levels/Level1"];
     [_levelNode addChild:level];
     
     // nothing shall collide with our invisible nodes
     _pullbackNode.physicsBody.collisionMask = @[];
-    
     _mouseJointNode.physicsBody.collisionMask = @[];
     
+    // collision delegate
     _physicsNode.collisionDelegate = self;
 }
 
@@ -49,12 +73,6 @@ static const float MIN_SPEED = 5.f;
     // start catapult dragging when a touch inside of the catapult arm occurs
     if (CGRectContainsPoint([_catapultArm boundingBox], touchLocation))
     {
-        // move the mouseJointNode to the touch position
-        _mouseJointNode.position = touchLocation;
-        
-        // setup a spring joint between the mouseJointNode and the catapultArm
-        _mouseJoint = [CCPhysicsJoint connectedSpringJointWithBodyA:_mouseJointNode.physicsBody bodyB:_catapultArm.physicsBody anchorA:ccp(0, 0) anchorB:ccp(34, 138) restLength:0.f stiffness:3000.f damping:150.f];
-        
         // create a penguin from the ccb-file
         _currentPenguin = (Penguin*)[CCBReader load:@"Penguin"];
         // initially position it on the scoop. 34,138 is the position in the node space of the _catapultArm
@@ -68,7 +86,62 @@ static const float MIN_SPEED = 5.f;
         
         // create a joint to keep the penguin fixed to the scoop until the catapult is released
         _penguinCatapultJoint = [CCPhysicsJoint connectedPivotJointWithBodyA:_currentPenguin.physicsBody bodyB:_catapultArm.physicsBody anchorA:_currentPenguin.anchorPointInPoints];
+        
+        // move the mouseJointNode to the touch position
+        _mouseJointNode.position = touchLocation;
+        
+        // setup a spring joint between the mouseJointNode and the catapultArm
+        _mouseJoint = [CCPhysicsJoint connectedSpringJointWithBodyA:_mouseJointNode.physicsBody bodyB:_catapultArm.physicsBody anchorA:ccp(0, 0) anchorB:ccp(34, 138) restLength:0.f stiffness:3000.f damping:150.f];
     }
+}
+
+- (void)touchMoved:(UITouch *)touch withEvent:(UIEvent *)event
+{
+    // whenever touches move, update the position of the mouseJointNode to the touch position
+    CGPoint touchLocation = [touch locationInNode:_contentNode];
+    _mouseJointNode.position = touchLocation;
+}
+
+- (void)releaseCatapult {
+    if (_mouseJoint != nil)
+    {
+        // releases the joint and lets the penguin fly
+        [_penguinCatapultJoint invalidate];
+        _penguinCatapultJoint = nil;
+        
+        // after snapping rotation is fine
+        _currentPenguin.physicsBody.allowsRotation = TRUE;
+        
+        // follow the flying penguin
+        _followPenguin = [CCActionFollow actionWithTarget:_currentPenguin worldBoundary:self.boundingBox];
+        [_contentNode runAction:_followPenguin];
+        
+        // releases the joint and lets the catapult snap back
+        [_mouseJoint invalidate];
+        _mouseJoint = nil;
+    }
+    // set penguin as launched
+    _currentPenguin.launched = TRUE;
+}
+
+- (void)nextAttempt {
+    _currentPenguin = nil;
+    [_contentNode stopAction:_followPenguin];
+    
+    CCActionMoveTo *actionMoveTo = [CCActionMoveTo actionWithDuration:1.f position:ccp(0, 0)];
+    [_contentNode runAction:actionMoveTo];
+}
+
+-(void) touchEnded:(UITouch *)touch withEvent:(UIEvent *)event
+{
+    // when touches end, meaning the user releases their finger, release the catapult
+    [self releaseCatapult];
+}
+
+-(void) touchCancelled:(UITouch *)touch withEvent:(UIEvent *)event
+{
+    // when touches are cancelled, meaning the user drags their finger off the screen or onto something else, release the catapult
+    [self releaseCatapult];
 }
 
 - (void)launchPenguin {
@@ -85,7 +158,7 @@ static const float MIN_SPEED = 5.f;
     CGPoint force = ccpMult(launchDirection, 8000);
     [penguin.physicsBody applyForce:force];
     
-    // ensure followed object is in visible are when starting
+    // ensure followed object is visible when starting
     self.position = ccp(0, 0);
     CCActionFollow *follow = [CCActionFollow actionWithTarget:penguin worldBoundary:self.boundingBox];
     [_contentNode runAction:follow];
@@ -94,46 +167,6 @@ static const float MIN_SPEED = 5.f;
 - (void)retry {
     // reload this level
     [[CCDirector sharedDirector] replaceScene: [CCBReader loadAsScene:@"Gameplay"]];
-}
-
-- (void)touchMoved:(UITouch *)touch withEvent:(UIEvent *)event
-{
-    // whenever touches move, update the position of the mouseJointNode to the touch position
-    CGPoint touchLocation = [touch locationInNode:_contentNode];
-    _mouseJointNode.position = touchLocation;
-}
-
-- (void)releaseCatapult {
-    if (_mouseJoint != nil)
-    {
-        // releases the joint and lets the catapult snap back
-        [_mouseJoint invalidate];
-        _mouseJoint = nil;
-        
-        // releases the joint and lets the penguin fly
-        [_penguinCatapultJoint invalidate];
-        _penguinCatapultJoint = nil;
-        
-        // after snapping rotation is fine
-        _currentPenguin.physicsBody.allowsRotation = TRUE;
-        
-        // follow the flying penguin
-        _followPenguin = [CCActionFollow actionWithTarget:_currentPenguin worldBoundary:self.boundingBox];
-        [_contentNode runAction:_followPenguin];
-        _currentPenguin.launched = TRUE;
-    }
-}
-
--(void) touchEnded:(UITouch *)touch withEvent:(UIEvent *)event
-{
-    // when touches end, meaning the user releases their finger, release the catapult
-    [self releaseCatapult];
-}
-
--(void) touchCancelled:(UITouch *)touch withEvent:(UIEvent *)event
-{
-    // when touches are cancelled, meaning the user drags their finger off the screen or onto something else, release the catapult
-    [self releaseCatapult];
 }
 
 - (void)ccPhysicsCollisionPostSolve:(CCPhysicsCollisionPair *)pair seal:(CCNode *)nodeA wildcard:(CCNode *)nodeB {
@@ -159,40 +192,6 @@ static const float MIN_SPEED = 5.f;
     
     // finally, remove the destroyed seal
     [seal removeFromParent];
-}
-
-- (void)update:(CCTime)delta
-{
-    if (_currentPenguin.launched)
-    {
-        // if speed is below minimum speed, assume this attempt is over
-        if (ccpLength(_currentPenguin.physicsBody.velocity) < MIN_SPEED){
-            [self nextAttempt];
-            return;
-        }
-        
-        int xMin = _currentPenguin.boundingBox.origin.x;
-        
-        if (xMin < self.boundingBox.origin.x) {
-            [self nextAttempt];
-            return;
-        }
-        
-        int xMax = xMin + _currentPenguin.boundingBox.size.width;
-        
-        if (xMax > (self.boundingBox.origin.x + self.boundingBox.size.width)) {
-            [self nextAttempt];
-            return;
-        }
-    }
-}
-
-- (void)nextAttempt {
-    _currentPenguin = nil;
-    [_contentNode stopAction:_followPenguin];
-    
-    CCActionMoveTo *actionMoveTo = [CCActionMoveTo actionWithDuration:1.f position:ccp(0, 0)];
-    [_contentNode runAction:actionMoveTo];
 }
 
 @end
