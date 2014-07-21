@@ -27,7 +27,7 @@ static const float MIN_SPEED = 5.f;
 
 - (void)update:(CCTime)delta
 {
-    NSlog(@"%d", _currentPenguin.launched);
+    NSLog(@"%d", _currentPenguin.launched);
     //
     //
     //  The problem is with _currnetPenguin.launched
