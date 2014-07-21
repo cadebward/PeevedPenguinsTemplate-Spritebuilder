@@ -27,6 +27,14 @@ static const float MIN_SPEED = 5.f;
 
 - (void)update:(CCTime)delta
 {
+    NSlog(@"%d", _currentPenguin.launched);
+    //
+    //
+    //  The problem is with _currnetPenguin.launched
+    //  Might be be set properly or something, then the if statement fails
+    //
+    //
+    //
     if(_currentPenguin.launched) {
         // if speed is below minimum speed, assume this attempt is over
         if (ccpLength(_currentPenguin.physicsBody.velocity) < MIN_SPEED){
